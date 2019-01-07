@@ -115,6 +115,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Event.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Word.cpp" />
   </ItemGroup>
@@ -122,6 +123,7 @@
     <None Include="src\Main.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Event.h" />
     <ClInclude Include="src\Word.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -6,7 +6,7 @@
 #include <Windows.h>
 #include <vector>
 
-#define BOTTOM_OF_SCREEN 29
+#define BOTTOM_OF_SCREEN 25
 #define EDGE_OF_SCREEN 119
 
 namespace Word {
