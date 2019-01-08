@@ -37,12 +37,16 @@ namespace Word {
     Word::Word()
     {
         int rand_word_pos = rand() % s_all_words_size - 1;
-        m_word = s_all_available_words[rand_word_pos];
+        const wchar_t* new_word = s_all_available_words[rand_word_pos];
+        wchar_t* new_word_buffer = new wchar_t[100];
         m_word_length = 0;
-        while (m_word[m_word_length] != '\0') {
+        while (new_word[m_word_length] != '\0') {
+            new_word_buffer[m_word_length] = towupper(new_word[m_word_length]);
             m_word_length++;
         }
+        new_word_buffer[m_word_length] = '\0';
 
+        m_word = new_word_buffer;
         m_y = BOTTOM_OF_SCREEN;
         m_x = DetermineNewWordXPos();
     }

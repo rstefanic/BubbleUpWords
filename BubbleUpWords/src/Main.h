@@ -40,3 +40,4 @@ void UpdateGame();
 void WriteWordsToBuffer(wchar_t* screen);
 void Render(wchar_t* screen);
 bool CheckIfEntryIsCorrect();
+void ResetPlayerInputBuffer();

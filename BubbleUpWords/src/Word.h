@@ -3,10 +3,11 @@
 #include <iostream>
 #include <iterator>
 #include <fstream>
+#include <wctype.h>
 #include <Windows.h>
 #include <vector>
 
-#define BOTTOM_OF_SCREEN 25
+#define BOTTOM_OF_SCREEN 27
 #define EDGE_OF_SCREEN 119
 
 namespace Word {

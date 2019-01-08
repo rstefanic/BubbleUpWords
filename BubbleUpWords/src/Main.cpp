@@ -24,9 +24,10 @@ void SetupGame(wchar_t* screen)
     
     // Setup game variables
     cycles = 0;
-    input_buffer_size = 0;
     missed_words = 0;
     correct_words = 0;
+
+    ResetPlayerInputBuffer();
 }
 
 void ClearScreen(wchar_t* screen)
@@ -47,7 +48,7 @@ void StartGame(wchar_t* screen)
     {
         std::chrono::system_clock::time_point tp1 = std::chrono::system_clock::now();
         while ((std::chrono::system_clock::now() - tp1)
-            < std::chrono::milliseconds(200))
+            < std::chrono::milliseconds(500))
         {
             bool key_was_pressed = false;
             wchar_t key_pressed = Event::GetKeyPresses(&key_was_pressed);
@@ -57,6 +58,7 @@ void StartGame(wchar_t* screen)
                 if (key_pressed == (wchar_t)VK_RETURN)
                 {
                     bool word_removed = CheckIfEntryIsCorrect();
+                    ResetPlayerInputBuffer();
                 }
                 else if (key_pressed == L'\0')
                 {
@@ -80,11 +82,10 @@ void DrawUI(wchar_t* screen)
 {
     for (register int i = 0; i < SCREEN_WIDTH; i++)
     {
-        screen[i] = L'=';
-        screen[2 * SCREEN_WIDTH + i] = L'=';
+        screen[((SCREEN_HEIGHT - 3) * SCREEN_WIDTH) + i] = L'=';
     }
 
-    wsprintf(&screen[SCREEN_WIDTH + 5],
+    wsprintf(&screen[((SCREEN_HEIGHT - 2) * SCREEN_WIDTH) + 33],
         L"Misses: %d          Words Correct: %d          Word: %s",
         missed_words, correct_words, player_input_buffer);
 }
@@ -131,11 +132,12 @@ bool CheckIfEntryIsCorrect()
 
     for (Word::Word* w : Word::all_words)
     {
-        if (std::wcscmp(w->get_word(), player_input_buffer))
+        if (std::wcscmp(w->get_word(), player_input_buffer) == 0)
         {
             w->~Word();
             std::vector<Word::Word*>::iterator i = Word::all_words.begin() + word_pos;
             Word::all_words.erase(i);
+            correct_words++;
 
             return true;
         }
@@ -145,4 +147,16 @@ bool CheckIfEntryIsCorrect()
     }
 
     return false;
+}
+
+void ResetPlayerInputBuffer()
+{
+    for (register int i = 0; i < INPUT_BUFFER_SIZE; i++)
+    {
+        player_input_buffer[0] = L' ';
+    }
+
+    input_buffer_size = 0;
+
+    player_input_buffer[input_buffer_size] = '\0';
 }
