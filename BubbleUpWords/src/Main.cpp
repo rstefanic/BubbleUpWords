@@ -55,10 +55,19 @@ void StartGame(wchar_t* screen)
 
             if (key_was_pressed)
             {
-                if (key_pressed == (wchar_t)VK_RETURN)
+                if (key_pressed == VK_RETURN)
                 {
                     bool word_removed = CheckIfEntryIsCorrect();
                     ResetPlayerInputBuffer();
+                }
+                else if (key_pressed == VK_BACK)
+                {
+                    // Only decrease the buffer size and delete a character
+                    // if it is not at the beginning of the buffer
+                    if (input_buffer_size > 0) {
+                        input_buffer_size--;
+                        player_input_buffer[input_buffer_size] = L'\0';
+                    }
                 }
                 else if (key_pressed == L'\0')
                 {
