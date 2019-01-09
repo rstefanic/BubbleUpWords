@@ -48,7 +48,7 @@ void StartGame(wchar_t* screen)
     {
         std::chrono::system_clock::time_point tp1 = std::chrono::system_clock::now();
         while ((std::chrono::system_clock::now() - tp1)
-            < std::chrono::milliseconds(500))
+            < std::chrono::milliseconds(20))
         {
             bool key_was_pressed = false;
             wchar_t key_pressed = Event::GetKeyPresses(&key_was_pressed);
@@ -105,11 +105,12 @@ void UpdateGame()
         else 
         {
             word_pos++;
-            w->MoveWordUp();
+            if ((cycles % 25) == 0)
+                w->MoveWordUp();
         }
     }
 
-    if (cycles < 5) 
+    if (cycles <= 50) 
     {
         cycles++;
     }
