@@ -36,6 +36,7 @@ namespace Word {
 
     Word::Word()
     {
+        srand(std::time(NULL));
         int rand_word_pos = rand() % s_all_words_size - 1;
         const wchar_t* new_word = s_all_available_words[rand_word_pos];
         wchar_t* new_word_buffer = new wchar_t[100];
