@@ -92,9 +92,21 @@ void DrawUI(wchar_t* screen)
 
 void UpdateGame()
 {
+    int word_pos = 0;
     for (Word::Word* w : Word::all_words)
     {
-        w->MoveWordUp();
+        if (w->word_is_destroyed()) 
+        {
+            w->~Word();
+            std::vector<Word::Word*>::iterator i = Word::all_words.begin() + word_pos;
+            Word::all_words.erase(i);
+            missed_words++;
+        }
+        else 
+        {
+            word_pos++;
+            w->MoveWordUp();
+        }
     }
 
     if (cycles < 5) 
