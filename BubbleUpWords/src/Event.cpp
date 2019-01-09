@@ -63,18 +63,46 @@ bool Event::CheckForKeyPress(wchar_t c)
 
 wchar_t Event::GetKeyPresses(bool* key_was_pressed)
 {
-    const wchar_t return_key = (wchar_t)VK_RETURN;
+    // ---------------------------------------------
+    // Handle Special Characters first 
+    // e.g. ReturnKey, Apostrophe, Backspace, etc.
+    // ---------------------------------------------
 
-    if (CheckForKeyPress(return_key)) 
+    if (CheckForKeyPress(VK_RETURN)) 
     {
         *key_was_pressed = true;
-        return (return_key);
+        return (VK_RETURN);
     }
 
-    const wchar_t* all_keys = 
-        L"ABCDEFGHIJKLMNOPQRSTUVQXYZ'";
+    // VK_OEM_7 == SingleQuote on US Keyboard Layout
+    if (CheckForKeyPress(VK_OEM_7))
+    {
+        *key_was_pressed = true;
+        if (kp_old_APOS == true)
+        {
+            kp_old_APOS = false;
+            SetAllKPToOld();
+            return L'\0';
+        }
+        else
+        {
+            kp_APOS = true;
+            SetAllKPToOld();
+            return L'\'';
+        }
+    }
 
-    for (register int i = 0; i < 27; i++)
+    if (CheckForKeyPress(VK_BACK))
+    {
+        *key_was_pressed = true;
+        return VK_BACK;
+    }
+
+    // All Regular A-Z Keys
+    const wchar_t* all_keys = 
+        L"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    for (register int i = 0; i < 26; i++)
     {
         if (CheckForKeyPress(*(all_keys + i)))
         {
@@ -154,8 +182,6 @@ bool Event::SetProperKP(wchar_t c)
         KEY_CHECK(Y)
     case L'Z':
         KEY_CHECK(Z)
-    case L'\'':
-        KEY_CHECK(APOS)
     default:
         return false;
     }
