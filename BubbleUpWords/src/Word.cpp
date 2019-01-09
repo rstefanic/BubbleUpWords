@@ -49,6 +49,7 @@ namespace Word {
         m_word = new_word_buffer;
         m_y = BOTTOM_OF_SCREEN;
         m_x = DetermineNewWordXPos();
+        m_word_is_destroyed = false;
     }
 
     int Word::DetermineNewWordXPos()
@@ -107,6 +108,11 @@ namespace Word {
 
     void Word::MoveWordUp()
     {
-        m_y > 0 ? m_y-- : 0; 
+        if (m_y > 0) {
+            m_y--;
+        }
+        else {
+            m_word_is_destroyed = true;
+        }
     }
 }

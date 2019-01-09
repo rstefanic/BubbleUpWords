@@ -18,6 +18,7 @@ namespace Word {
         static bool Init();
         const wchar_t* get_word();
         const int get_word_length();
+        bool word_is_destroyed() { return m_word_is_destroyed; }
         int x();
         int y();
         void MoveWordUp();
@@ -30,6 +31,7 @@ namespace Word {
 
         const wchar_t* m_word;
 
+        bool m_word_is_destroyed;
         int m_word_length;
         int m_x;
         int m_y;
