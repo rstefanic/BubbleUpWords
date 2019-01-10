@@ -17,6 +17,7 @@ int main()
 
     MainMenu(screen, &g);
     StartGame(screen, &g);
+    GameOver(screen, &g);
     return 0;
 }
 
@@ -131,9 +132,6 @@ void StartGame(wchar_t* screen, globals* g)
         UpdateGame(g);
         Render(screen, g);
     }
-
-    GameOver(screen);
-    Render(screen, g);
 }
 
 void DrawUI(wchar_t* screen, globals* g)
@@ -152,7 +150,6 @@ void DrawUI(wchar_t* screen, globals* g)
     else
     {
         wchar_t* time_buffer = new wchar_t[5];
-        size_t out_size;
 
         // Get the current time
         auto elapsed_time = std::chrono::system_clock::now() - g->start_time;
@@ -261,10 +258,39 @@ void ResetPlayerInputBuffer(globals* g)
     g->player_input_buffer[g->input_buffer_size] = '\0';
 }
 
-void GameOver(wchar_t* screen)
+void GameOver(wchar_t* screen, globals* g)
 {
-    wsprintf(&screen[15 + (SCREEN_WIDTH * 40)],
+    ClearScreen(screen);
+    wsprintf(&screen[8 * SCREEN_WIDTH + 50],
+        L"*****************");
+    wsprintf(&screen[9 * SCREEN_WIDTH + 50],
         L"*** GAME OVER ***");
+    wsprintf(&screen[10 * SCREEN_WIDTH + 50],
+        L"*****************");
+    wsprintf(&screen[13 * SCREEN_WIDTH + 47],
+        L"***********************");
+    wsprintf(&screen[14 * SCREEN_WIDTH + 47],
+        L"*PRESS 'ENTER' TO EXIT*");
+    wsprintf(&screen[15 * SCREEN_WIDTH + 47],
+        L"***********************");
+    wsprintf(&screen[18 * SCREEN_WIDTH + 47],
+        L"***********************");
+    wsprintf(&screen[19 * SCREEN_WIDTH + 47],
+        L"********SUMMARY********");
+    wsprintf(&screen[20 * SCREEN_WIDTH + 47],
+        L"***********************");
+    wsprintf(&screen[21 * SCREEN_WIDTH + 47],
+        L"        WPM: %d", g->wpm);
+    wsprintf(&screen[22 * SCREEN_WIDTH + 47],
+        L"      Correct: %d", g->correct_words);
+    wsprintf(&screen[23 * SCREEN_WIDTH + 47],
+        L"       Misses: %d", g->missed_words);
+    wsprintf(&screen[24 * SCREEN_WIDTH + 47],
+        L"***********************");
+    WriteConsoleOutputCharacter(hConsole, screen,
+        SCREEN_WIDTH * SCREEN_HEIGHT, { 0, 0 }, &bytes_written);
+
+    while (GetAsyncKeyState(VK_RETURN) == 0);
 }
 
 bool DetermineConditions(globals* g)

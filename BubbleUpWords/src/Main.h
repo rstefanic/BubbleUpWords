@@ -56,5 +56,5 @@ void WriteWordsToBuffer(wchar_t* screen);
 void Render(wchar_t* screen, globals* g);
 bool CheckIfEntryIsCorrect(globals* g);
 void ResetPlayerInputBuffer(globals* g);
-void GameOver(wchar_t* screen);
+void GameOver(wchar_t* screen, globals* g);
 bool DetermineConditions(globals* g);
