@@ -13,21 +13,64 @@ int main()
         0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 
     SetConsoleActiveScreenBuffer(hConsole);
+    globals g;
 
-    StartGame(screen);
+    MainMenu(screen, &g);
+    StartGame(screen, &g);
     return 0;
 }
 
-void SetupGame(wchar_t* screen)
+void MainMenu(wchar_t* screen, globals* g)
+{
+    ClearScreen(screen);
+
+    GAME_TYPE gt = MISS_WORDS;
+    bool start = false;
+    bool key_space = false;
+    bool key_space_old = false;
+
+    static const wchar_t* game_types[] = { L" Missed Words ", L"Beat The Clock" };
+
+    while (!start)
+    {
+        wsprintf(&screen[10 * SCREEN_WIDTH + 51],
+            L"Bubble Up Words");
+        wsprintf(&screen[14 * SCREEN_WIDTH + 51],
+            L"   GAME MODE  ");
+        wsprintf(&screen[15 * SCREEN_WIDTH + 51],
+            gt == MISS_WORDS ? game_types[0] : game_types[1]);
+        wsprintf(&screen[20 * SCREEN_WIDTH + 32],
+            L"Press 'Enter' to start or 'Space' to switch the game mode");
+        WriteConsoleOutputCharacter(hConsole, screen,
+            SCREEN_WIDTH * SCREEN_HEIGHT, { 0, 0 }, &bytes_written);
+
+        key_space = GetAsyncKeyState(VK_SPACE) != 0;
+
+        if (key_space && !key_space_old)
+        {
+            gt = gt == MISS_WORDS ? BEAT_THE_CLOCK : MISS_WORDS;
+        }
+
+        key_space_old = key_space;
+
+        if (GetAsyncKeyState(VK_RETURN)) {
+            start = true;
+        }
+    }
+
+    g->game_type = gt;
+}
+
+void SetupGame(wchar_t* screen, globals* g)
 {
     ClearScreen(screen);
     
     // Setup game variables
-    cycles = 0;
-    missed_words = 0;
-    correct_words = 0;
-
-    ResetPlayerInputBuffer();
+    g->cycles = 0;
+    g->missed_words = 0;
+    g->correct_words = 0;
+    g->start_time = std::chrono::system_clock::now();
+    ResetPlayerInputBuffer(g);
 }
 
 void ClearScreen(wchar_t* screen)
@@ -38,13 +81,13 @@ void ClearScreen(wchar_t* screen)
     }
 }
 
-void StartGame(wchar_t* screen)
+void StartGame(wchar_t* screen, globals* g)
 {
     // Start out with at least one word
     Word::AddNewWord();
-    SetupGame(screen);
+    SetupGame(screen, g);
 
-    while (1)
+    while (DetermineConditions(g))
     {
         std::chrono::system_clock::time_point tp1 = std::chrono::system_clock::now();
         while ((std::chrono::system_clock::now() - tp1)
@@ -57,16 +100,16 @@ void StartGame(wchar_t* screen)
             {
                 if (key_pressed == VK_RETURN)
                 {
-                    bool word_removed = CheckIfEntryIsCorrect();
-                    ResetPlayerInputBuffer();
+                    bool word_removed = CheckIfEntryIsCorrect(g);
+                    ResetPlayerInputBuffer(g);
                 }
                 else if (key_pressed == VK_BACK)
                 {
                     // Only decrease the buffer size and delete a character
                     // if it is not at the beginning of the buffer
-                    if (input_buffer_size > 0) {
-                        input_buffer_size--;
-                        player_input_buffer[input_buffer_size] = L'\0';
+                    if (g->input_buffer_size > 0) {
+                        g->input_buffer_size--;
+                        g->player_input_buffer[g->input_buffer_size] = L'\0';
                     }
                 }
                 else if (key_pressed == L'\0')
@@ -75,31 +118,54 @@ void StartGame(wchar_t* screen)
                 }
                 else
                 {
-                    player_input_buffer[input_buffer_size] = key_pressed;
-                    player_input_buffer[input_buffer_size + 1] = L'\0';
-                    input_buffer_size++;
+                    g->player_input_buffer[g->input_buffer_size] = key_pressed;
+                    g->player_input_buffer[g->input_buffer_size + 1] = L'\0';
+                    g->input_buffer_size++;
                 }
             }
         }
 
-        UpdateGame();
-        Render(screen);
+        UpdateGame(g);
+        Render(screen, g);
     }
+
+    GameOver(screen);
+    Render(screen, g);
 }
 
-void DrawUI(wchar_t* screen)
+void DrawUI(wchar_t* screen, globals* g)
 {
     for (register int i = 0; i < SCREEN_WIDTH; i++)
     {
         screen[((SCREEN_HEIGHT - 3) * SCREEN_WIDTH) + i] = L'=';
     }
 
-    wsprintf(&screen[((SCREEN_HEIGHT - 2) * SCREEN_WIDTH) + 33],
-        L"Misses: %d          Words Correct: %d          Word: %s",
-        missed_words, correct_words, player_input_buffer);
+    if (g->game_type == MISS_WORDS)
+    {
+        wsprintf(&screen[((SCREEN_HEIGHT - 2) * SCREEN_WIDTH) + 33],
+            L"Misses: %d/20       Words Correct: %d          Word: %s",
+            g->missed_words, g->correct_words, g->player_input_buffer);
+    }
+    else
+    {
+        wchar_t* time_buffer = new wchar_t[5];
+        size_t out_size;
+
+        // Get the current time
+        auto elapsed_time = std::chrono::system_clock::now() - g->start_time;
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time);
+
+        // convert duration to wstring
+        auto duration_s = std::to_string(duration.count());
+        std::wstring duration_w = std::wstring(duration_s.begin(), duration_s.end());
+
+        wsprintf(&screen[((SCREEN_HEIGHT - 2) * SCREEN_WIDTH) + 33],
+            L"Time: %s s       Words Correct: %d          Word: %s",
+            duration_w.c_str(), g->correct_words, g->player_input_buffer);
+    }
 }
 
-void UpdateGame()
+void UpdateGame(globals* g)
 {
     int word_pos = 0;
     for (Word::Word* w : Word::all_words)
@@ -109,31 +175,31 @@ void UpdateGame()
             w->~Word();
             std::vector<Word::Word*>::iterator i = Word::all_words.begin() + word_pos;
             Word::all_words.erase(i);
-            missed_words++;
+            g->missed_words++;
         }
         else 
         {
             word_pos++;
-            if ((cycles % 25) == 0)
+            if ((g->cycles % 25) == 0)
                 w->MoveWordUp();
         }
     }
 
-    if (cycles <= 50) 
+    if (g->cycles <= 50) 
     {
-        cycles++;
+        g->cycles++;
     }
     else {
-        cycles = 0;
+        g->cycles = 0;
         Word::AddNewWord();
     }
 }
 
-void Render(wchar_t* screen)
+void Render(wchar_t* screen, globals* g)
 {
     ClearScreen(screen);
     WriteWordsToBuffer(screen);
-    DrawUI(screen);
+    DrawUI(screen, g);
     WriteConsoleOutputCharacter(hConsole, screen,
         SCREEN_WIDTH * SCREEN_HEIGHT, { 0, 0 }, &bytes_written);
 }
@@ -147,19 +213,19 @@ void WriteWordsToBuffer(wchar_t* screen)
     }
 }
 
-bool CheckIfEntryIsCorrect()
+bool CheckIfEntryIsCorrect(globals* g)
 {
     int word_pos = 0;
-    input_buffer_size = 0;
+    g->input_buffer_size = 0;
 
     for (Word::Word* w : Word::all_words)
     {
-        if (std::wcscmp(w->get_word(), player_input_buffer) == 0)
+        if (std::wcscmp(w->get_word(), g->player_input_buffer) == 0)
         {
             w->~Word();
             std::vector<Word::Word*>::iterator i = Word::all_words.begin() + word_pos;
             Word::all_words.erase(i);
-            correct_words++;
+            g->correct_words++;
 
             return true;
         }
@@ -171,14 +237,32 @@ bool CheckIfEntryIsCorrect()
     return false;
 }
 
-void ResetPlayerInputBuffer()
+void ResetPlayerInputBuffer(globals* g)
 {
     for (register int i = 0; i < INPUT_BUFFER_SIZE; i++)
     {
-        player_input_buffer[0] = L' ';
+        g->player_input_buffer[0] = L' ';
     }
 
-    input_buffer_size = 0;
+    g->input_buffer_size = 0;
 
-    player_input_buffer[input_buffer_size] = '\0';
+    g->player_input_buffer[g->input_buffer_size] = '\0';
+}
+
+void GameOver(wchar_t* screen)
+{
+    wsprintf(&screen[15 + (SCREEN_WIDTH * 40)],
+        L"*** GAME OVER ***");
+}
+
+bool DetermineConditions(globals* g)
+{
+    if (g->game_type == MISS_WORDS)
+    {
+        return (g->missed_words < 20);
+    }
+    else
+    {
+        return ((std::chrono::system_clock::now() - g->start_time) < std::chrono::minutes(2));
+    }
 }
