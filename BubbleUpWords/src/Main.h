@@ -30,7 +30,10 @@ struct globals
 {
     GAME_TYPE game_type;
     std::chrono::system_clock::time_point start_time;
+    std::chrono::system_clock::time_point wpm_timer;
     wchar_t player_input_buffer[INPUT_BUFFER_SIZE];
+    unsigned int old_word_count;
+    unsigned int wpm;
     unsigned int input_buffer_size;
     unsigned int cycles;
     unsigned int missed_words;

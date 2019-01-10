@@ -69,7 +69,10 @@ void SetupGame(wchar_t* screen, globals* g)
     g->cycles = 0;
     g->missed_words = 0;
     g->correct_words = 0;
+    g->old_word_count = 0;
+    g->wpm = 0;
     g->start_time = std::chrono::system_clock::now();
+    g->wpm_timer = std::chrono::system_clock::now();
     ResetPlayerInputBuffer(g);
 }
 
@@ -142,9 +145,9 @@ void DrawUI(wchar_t* screen, globals* g)
 
     if (g->game_type == MISS_WORDS)
     {
-        wsprintf(&screen[((SCREEN_HEIGHT - 2) * SCREEN_WIDTH) + 33],
-            L"Misses: %d/20       Words Correct: %d          Word: %s",
-            g->missed_words, g->correct_words, g->player_input_buffer);
+        wsprintf(&screen[((SCREEN_HEIGHT - 2) * SCREEN_WIDTH) + 30],
+            L"WPM: %d     Misses: %d/20       Words Correct: %d          Word: %s",
+            g->wpm, g->missed_words, g->correct_words, g->player_input_buffer);
     }
     else
     {
@@ -159,9 +162,9 @@ void DrawUI(wchar_t* screen, globals* g)
         auto duration_s = std::to_string(duration.count());
         std::wstring duration_w = std::wstring(duration_s.begin(), duration_s.end());
 
-        wsprintf(&screen[((SCREEN_HEIGHT - 2) * SCREEN_WIDTH) + 33],
-            L"Time: %s s       Words Correct: %d          Word: %s",
-            duration_w.c_str(), g->correct_words, g->player_input_buffer);
+        wsprintf(&screen[((SCREEN_HEIGHT - 2) * SCREEN_WIDTH) + 30],
+            L"WPM: %d     Time: %s s       Words Correct: %d          Word: %s",
+            g->wpm, duration_w.c_str(), g->correct_words, g->player_input_buffer);
     }
 }
 
@@ -192,6 +195,15 @@ void UpdateGame(globals* g)
     else {
         g->cycles = 0;
         Word::AddNewWord();
+    }
+
+    if ((std::chrono::system_clock::now() - g->wpm_timer) >= std::chrono::seconds(10))
+    {
+        unsigned int words_in_ten = g->correct_words - g->old_word_count;
+        g->wpm = words_in_ten * 6;
+        g->old_word_count = g->correct_words;
+        // Reset wpm_timer
+        g->wpm_timer = std::chrono::system_clock::now();
     }
 }
 
